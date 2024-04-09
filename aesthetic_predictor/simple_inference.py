@@ -25,10 +25,9 @@ from PIL import Image, ImageFile
 img_path = "test.jpg"
 
 
-
 # if you changed the MLP architecture during training, change it also here:
 class MLP(pl.LightningModule):
-    def __init__(self, input_size, xcol='emb', ycol='avg_rating'):
+    def __init__(self, input_size, xcol="emb", ycol="avg_rating"):
         super().__init__()
         self.input_size = input_size
         self.xcol = xcol
@@ -43,11 +42,9 @@ class MLP(pl.LightningModule):
             nn.Linear(128, 64),
             # nn.ReLU(),
             nn.Dropout(0.1),
-
             nn.Linear(64, 16),
             # nn.ReLU(),
-
-            nn.Linear(16, 1)
+            nn.Linear(16, 1),
         )
 
     def forward(self, x):
@@ -68,8 +65,7 @@ def normalized(a, return_l2=False, axis=-1, order=2):
 
 
 class AestheticPredictor:
-
-    def __init__(self, device='cuda'):
+    def __init__(self, device="cuda"):
         self.embedding_dim = 768  # CLIP embedding dim is 768 for CLIP ViT L 14
         self.device = device
         self.mlp = self.initialize_mlp()
@@ -77,15 +73,21 @@ class AestheticPredictor:
 
     def initialize_mlp(self):
         mlp = MLP(self.embedding_dim)  #
-        print(os.path.abspath('./aesthetic_predictor/sac+logos+ava1-l14-linearMSE.pth'))
+        print(os.path.abspath("./aesthetic_predictor/sac+logos+ava1-l14-linearMSE.pth"))
         # load the mlp you trained previously or the mlp available in this repo
-        s = torch.load("./aesthetic_predictor/sac+logos+ava1-l14-linearMSE.pth")
+        if self.device == "cpu":
+            s = torch.load(
+                "./aesthetic_predictor/sac+logos+ava1-l14-linearMSE.pth",
+                map_location=torch.device("cpu"),
+            )
+        else:
+            s = torch.load("./aesthetic_predictor/sac+logos+ava1-l14-linearMSE.pth")
         mlp.load_state_dict(s)
         mlp.to(self.device)
         mlp.eval()
         return mlp
 
-    def encode_input(self, input, image_input = True):
+    def encode_input(self, input, image_input=True):
         if image_input:
             input = self.preprocess(input).unsqueeze(0).to(self.device)
 
@@ -96,22 +98,26 @@ class AestheticPredictor:
             else:
                 return self.clip.encode_image(input)
 
-    def get_features(self, input, text_input = False, image_input = True, normalize = True):
+    def get_features(self, input, text_input=False, image_input=True, normalize=True):
         if text_input or image_input:
             features = self.encode_input(input, image_input)
         else:
             features = input
         if normalize:
-            #features = normalized(features.cpu().detach().numpy())
+            # features = normalized(features.cpu().detach().numpy())
             features = normalized(features)
-            #features = torch.from_numpy(features).to(self.device)
-            if self.device == 'cuda': features = features.type(torch.cuda.FloatTensor)
-            else: features = features.type(torch.FloatTensor)
+            # features = torch.from_numpy(features).to(self.device)
+            if self.device == "cuda":
+                features = features.type(torch.cuda.FloatTensor)
+            else:
+                features = features.type(torch.FloatTensor)
         return features
 
-    def predict_aesthetic_score(self, input, image_input = True):
+    def predict_aesthetic_score(self, input, image_input=True):
         text_input = not image_input
-        features = self.get_features(input, text_input=text_input, image_input=image_input)
+        features = self.get_features(
+            input, text_input=text_input, image_input=image_input
+        )
         prediction = self.mlp(features)
 
         print("Aesthetic score predicted by the mlp:")
