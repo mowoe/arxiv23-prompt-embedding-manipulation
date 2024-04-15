@@ -1,4 +1,5 @@
 import sys
+import comet_ml
 import platform
 
 if platform.system() == "Linux":
@@ -170,6 +171,14 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
     os.makedirs(f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/images")
     score_list = list()
     print("iterations:", iterations)
+    experiment = comet_ml.Experiment(
+      api_key=os.environ.get('COMET_ML_KEY'), project_name="christmas_present", workspace="mowoe"
+    )
+    experiment.log_parameters({
+        "n_iterations":iterations,
+        "metric":metric
+    })
+    
 
     for i in tqdm(range(int(iterations))):
         optimizer.zero_grad()
@@ -184,6 +193,8 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
         pil_image.save(
             f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/images/{i}_{prompt[0:45].strip()}_{round(score.item(), 4)}.jpg"
         )
+        experiment.log_image(pil_image, step=i)
+        experiment.log_metric("score",score.item())
 
         if metric == "Blurriness" and score < optimized_score:
             optimized_score = round(score.item(), 4)
