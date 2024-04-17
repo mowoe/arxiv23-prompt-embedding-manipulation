@@ -164,7 +164,7 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
             loss_scale = 20
 
     gradient_descent = GradientDescent(ldm.text_enc([prompt]))
-    optimizer = gradient_descent.get_optimizer(0.005)
+    optimizer = gradient_descent.get_optimizer(0.015)
     os.makedirs(
         f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings"
     )
