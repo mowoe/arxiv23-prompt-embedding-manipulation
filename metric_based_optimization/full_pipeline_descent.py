@@ -164,7 +164,7 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
             loss_scale = 20
 
     gradient_descent = GradientDescent(ldm.text_enc([prompt]))
-    optimizer = gradient_descent.get_optimizer(0.015)
+    optimizer = gradient_descent.get_optimizer(0.001)
     os.makedirs(
         f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings"
     )
@@ -275,5 +275,5 @@ if __name__ == "__main__":
     # increase_sharpness()
     # increase_blurriness()
     # increase_aesthetic_score()
-    increase_christmas_present_score(n_iterations=300)
+    increase_christmas_present_score(n_iterations=500)
     # Please increase number of iterations from 7 (to, e.g., 400 for the aesthetic score or 50 for the blurriness and sharpness) to get reasonable results.
