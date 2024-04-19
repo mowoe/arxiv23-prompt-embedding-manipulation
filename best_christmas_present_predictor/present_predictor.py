@@ -1,8 +1,9 @@
 import torch
 import clip
-from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
+from torchvision.transforms import Compose, Resize, CenterCrop, Normalize
 from loguru import logger
 from PIL import Image
+
 try:
     from torchvision.transforms import InterpolationMode
 
@@ -42,6 +43,7 @@ def download_pretrained_model():
 
 class ChristmasPredictor(object):
     def __init__(self, device):
+        self.device = device
         download_pretrained_model()
         self.encoder, self.preprocess = clip.load("ViT-L/14", device=device, jit=False)
         self.n_px = self.encoder.visual.input_resolution
@@ -55,8 +57,10 @@ class ChristmasPredictor(object):
                 ),
             ]
         )
-        self.pretrained_model = Pretrained()
+        self.pretrained_model = Pretrained(device=self.device)
         self.pretrained_model.to(device)
+        self.dtype = torch.float16
+        if self.device == "cpu": self.dtype = torch.float
 
     def get_score(self, torch_image: torch.Tensor):
         features = self.encoder.encode_image(
@@ -66,17 +70,20 @@ class ChristmasPredictor(object):
         prediction = self.pretrained_model.y(features)
         score = prediction[0][0]
         score = (
-            score * 20
+                score * 20
         )  # Multiply by 20 to get same value range as aesthetics predictor
         logger.info(f"Christmas Present Score: {score.detach().cpu().numpy().item()}")
         return score
 
 
 class Pretrained(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(Pretrained, self).__init__()
+        self.device = device
         self.fc1 = torch.nn.Linear(768, 1)
-        self.load_state_dict(torch.load("models/model.pt"), strict=True)
+        self.load_state_dict(torch.load("models/model.pt", map_location=self.device), strict=True)
+        if self.device != "cpu":
+            self.fc1 = self.fc1.to(torch.float16)
 
     def y(self, x):
         return self.fc1(x)
