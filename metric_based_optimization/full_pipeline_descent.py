@@ -14,11 +14,14 @@ from best_christmas_present_predictor.present_predictor import ChristmasPredicto
 from torch.nn import functional as F
 import os
 from tqdm.auto import tqdm
+from accelerate import Accelerator
 
 seed = 61582
 dim = 512
 
-device = "cpu"
+# device = "cpu"
+accelerator = Accelerator()
+device = accelerator.device
 
 ldm = StableDiffusion(device=device)
 aesthetic_predictor = AestheticPredictor(device=device)
@@ -179,6 +182,8 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
         "n_iterations":iterations,
         "metric":metric
     })
+
+    gradient_descent, optimizer = accelerator.prepare(gradient_descent, optimizer)
     
 
     for i in tqdm(range(int(iterations))):
@@ -213,7 +218,8 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
             pil_image.save(
                 f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/initial_{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
             )
-        loss.backward(retain_graph=True)
+        # loss.backward(retain_graph=True)
+        accelerator.backward(loss, retain_graph=True)
         optimizer.step()
 
         if metric == "LAION-Aesthetics V2" or metric == "Christmas Present":
