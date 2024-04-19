@@ -2,7 +2,7 @@ import torch
 import clip
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
 from loguru import logger
-
+from PIL import Image
 try:
     from torchvision.transforms import InterpolationMode
 
@@ -56,6 +56,7 @@ class ChristmasPredictor(object):
             ]
         )
         self.pretrained_model = Pretrained()
+        self.pretrained_model.to(device)
 
     def get_score(self, torch_image: torch.Tensor):
         features = self.encoder.encode_image(

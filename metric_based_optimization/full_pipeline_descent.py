@@ -26,7 +26,7 @@ device = accelerator.device
 ldm = StableDiffusion(device=device)
 aesthetic_predictor = AestheticPredictor(device=device)
 
-christmas_predictor = ChristmasPredictor(device)
+christmas_predictor = ChristmasPredictor(device=device)
 
 
 def compute_blurriness(image):
