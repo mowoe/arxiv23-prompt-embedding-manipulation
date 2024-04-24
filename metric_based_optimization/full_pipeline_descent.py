@@ -174,9 +174,9 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
     gradient_descent = GradientDescent(ldm.text_enc([prompt]))
     optimizer = gradient_descent.get_optimizer(0.001)
     os.makedirs(
-        f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings"
+        f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings"
     )
-    os.makedirs(f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/images")
+    os.makedirs(f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/images")
     score_list = list()
     print("iterations:", iterations)
     experiment = comet_ml.Experiment(
@@ -187,7 +187,8 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
         "metric":metric
     })
 
-    gradient_descent, optimizer = accelerator.prepare(gradient_descent, optimizer)
+    # gradient_descent, optimizer = accelerator.prepare(gradient_descent, optimizer)
+    gradient_descent, optimizer = fabric.setup(gradient_descent,optimizer)
     
 
     for i in tqdm(range(int(iterations))):
@@ -197,11 +198,11 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
         score_list.append(score.item())
         torch.save(
             gradient_descent.get_text_embedding(),
-            f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings/{i}_{prompt[0:45].strip()}.pt",
+            f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/embeddings/{i}_{prompt[0:45].strip()}.pt",
         )
         pil_image = ldm.latents_to_image(gradient_descent.latents)[0]
         pil_image.save(
-            f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/images/{i}_{prompt[0:45].strip()}_{round(score.item(), 4)}.jpg"
+            f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/images/{i}_{prompt[0:45].strip()}_{round(score.item(), 4)}.jpg"
         )
         experiment.log_image(pil_image, step=i)
         experiment.log_metric("score",score.item())
@@ -220,7 +221,7 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
         if i == 0:
             pil_image = ldm.latents_to_image(gradient_descent.latents)[0]
             pil_image.save(
-                f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/initial_{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
+                f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/initial_{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
             )
         # loss.backward(retain_graph=True)
         #accelerator.backward(loss, retain_graph=True)
@@ -232,7 +233,7 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
                 optimizer = gradient_descent.shift_embedding(0.005)
 
     with open(
-        f"./output/metric_optimization/{metric}/{prompt[0:45].strip()}/{round(optimized_score, 4)}_output.txt",
+        f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/{round(optimized_score, 4)}_output.txt",
         "w",
     ) as file:
         for item in score_list:
@@ -241,7 +242,7 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
     gradient_descent.latents = optimized_latents
     pil_image = ldm.latents_to_image(gradient_descent.latents)[0]
     pil_image.save(
-        f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
+        f"~/output/metric_optimization/{metric}/{prompt[0:45].strip()}/{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
     )
 
 
