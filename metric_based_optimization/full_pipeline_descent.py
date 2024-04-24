@@ -289,5 +289,5 @@ if __name__ == "__main__":
     # increase_sharpness()
     # increase_blurriness()
     # increase_aesthetic_score()
-    increase_christmas_present_score(n_iterations=500)
+    increase_christmas_present_score(n_iterations=1000)
     # Please increase number of iterations from 7 (to, e.g., 400 for the aesthetic score or 50 for the blurriness and sharpness) to get reasonable results.
