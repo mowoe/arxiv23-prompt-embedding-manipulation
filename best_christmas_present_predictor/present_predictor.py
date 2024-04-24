@@ -81,7 +81,7 @@ class Pretrained(torch.nn.Module):
     def __init__(self):
         super(Pretrained, self).__init__()
         self.fc1 = torch.nn.Linear(768, 1)
-        self.load_state_dict(torch.load("/tmp/models/model.pt", map_location=self.device), strict=True)
+        self.load_state_dict(torch.load("/tmp/models/model.pt"), strict=True)
         self.fc1 = self.fc1.to(torch.float16)
 
     def y(self, x):
