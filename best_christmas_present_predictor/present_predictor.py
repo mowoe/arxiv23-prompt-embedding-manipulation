@@ -1,3 +1,4 @@
+import lightning.fabric
 import torch
 import clip
 from torchvision.transforms import Compose, Resize, CenterCrop, Normalize
@@ -42,10 +43,9 @@ def download_pretrained_model():
 
 
 class ChristmasPredictor(object):
-    def __init__(self, device):
-        self.device = device
+    def __init__(self, fabric: lightning.fabric.Fabric):
         download_pretrained_model()
-        self.encoder, self.preprocess = clip.load("ViT-L/14", device=device, jit=False)
+        self.encoder, self.preprocess = clip.load("ViT-L/14", jit=False)
         self.n_px = self.encoder.visual.input_resolution
         self.special_preprocessor = Compose(
             [
@@ -57,10 +57,11 @@ class ChristmasPredictor(object):
                 ),
             ]
         )
-        self.pretrained_model = Pretrained(device=self.device)
-        self.pretrained_model.to(device)
+        self.pretrained_model = Pretrained()
+        self.pretrained_model = fabric.setup(self.pretrained_model)
         self.dtype = torch.float16
-        if self.device == "cpu": self.dtype = torch.float
+        #if self.device == "cpu":
+        #    self.dtype = torch.float
 
     def get_score(self, torch_image: torch.Tensor):
         features = self.encoder.encode_image(
@@ -77,13 +78,11 @@ class ChristmasPredictor(object):
 
 
 class Pretrained(torch.nn.Module):
-    def __init__(self, device):
+    def __init__(self):
         super(Pretrained, self).__init__()
-        self.device = device
         self.fc1 = torch.nn.Linear(768, 1)
         self.load_state_dict(torch.load("models/model.pt", map_location=self.device), strict=True)
-        if self.device != "cpu":
-            self.fc1 = self.fc1.to(torch.float16)
+        self.fc1 = self.fc1.to(torch.float16)
 
     def y(self, x):
         return self.fc1(x)

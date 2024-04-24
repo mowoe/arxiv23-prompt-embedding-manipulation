@@ -15,18 +15,22 @@ from torch.nn import functional as F
 import os
 from tqdm.auto import tqdm
 from accelerate import Accelerator
+from lightning.fabric import Fabric
 
 seed = 61582
 dim = 512
 
+fabric = Fabric()
+
 # device = "cpu"
-accelerator = Accelerator()
-device = accelerator.device
+#accelerator = Accelerator()
+#device = accelerator.device
+fabric.launch()
 
-ldm = StableDiffusion(device=device)
-aesthetic_predictor = AestheticPredictor(device=device)
+ldm = StableDiffusion()
+aesthetic_predictor = AestheticPredictor()
 
-christmas_predictor = ChristmasPredictor(device=device)
+christmas_predictor = ChristmasPredictor(fabric)
 
 
 def compute_blurriness(image):
@@ -219,7 +223,8 @@ def get_image(seed, iterations, prompt, metric,loss_scale = None):
                 f"output/metric_optimization/{metric}/{prompt[0:45].strip()}/initial_{prompt[0:45].strip()}_{round(optimized_score, 4)}.jpg"
             )
         # loss.backward(retain_graph=True)
-        accelerator.backward(loss, retain_graph=True)
+        #accelerator.backward(loss, retain_graph=True)
+        fabric.backward(loss, retain_graph=True)
         optimizer.step()
 
         if metric == "LAION-Aesthetics V2" or metric == "Christmas Present":
