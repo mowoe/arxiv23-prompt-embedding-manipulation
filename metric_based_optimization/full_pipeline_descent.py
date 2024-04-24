@@ -32,7 +32,7 @@ aesthetic_predictor = AestheticPredictor()
 
 christmas_predictor = ChristmasPredictor(fabric)
 
-output_dir = os.path.expanduser("~/output")
+output_dir = os.path.expanduser("/tmp/output")
 
 def compute_blurriness(image):
     # Convert the image to grayscale
@@ -133,12 +133,12 @@ class GradientDescent(torch.nn.Module):
         return score * loss_scale
 
     def get_optimizer(self, eta):
-        # return AdamOnLion(
-        #    params=self.parameters(),
-        #    lr=eta,
-        #    eps=0.001,
-        # )
-        return torch.optim.AdamW(self.parameters(), lr=eta, eps=0.001)
+         return AdamOnLion(
+            params=self.parameters(),
+            lr=eta,
+            eps=0.001,
+        )
+        #return torch.optim.AdamW(self.parameters(), lr=eta, eps=0.001)
 
     def shift_embedding(self, eta):
         self.condition = torch.nn.Parameter(
