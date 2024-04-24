@@ -33,7 +33,7 @@ def download_pretrained_model():
         # Extract the contents of the zip file
         with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
             # Specify the directory where you want to extract the contents
-            extraction_path = "."
+            extraction_path = "/tmp/"
             zip_ref.extractall(extraction_path)
             logger.info(f"Zip archive extracted to {extraction_path}")
     else:
@@ -81,7 +81,7 @@ class Pretrained(torch.nn.Module):
     def __init__(self):
         super(Pretrained, self).__init__()
         self.fc1 = torch.nn.Linear(768, 1)
-        self.load_state_dict(torch.load("models/model.pt", map_location=self.device), strict=True)
+        self.load_state_dict(torch.load("/tmp/models/model.pt", map_location=self.device), strict=True)
         self.fc1 = self.fc1.to(torch.float16)
 
     def y(self, x):
